@@ -1,0 +1,126 @@
+# All variables (like DOMAIN, UID, GID, and OAuth/SMTP settings) are set in the .env file
+
+services:
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    restart: unless-stopped
+    user: "${UID}:${GID}"
+    environment:
+      - DOMAIN=${DOMAIN}
+      # OAuth variables
+      - GRAFANA_OAUTH_CLIENT_SECRET=${GRAFANA_OAUTH_CLIENT_SECRET}
+      - GRAFANA_OAUTH_CLIENT_ID=${GRAFANA_OAUTH_CLIENT_ID}
+      - GRAFANA_OAUTH_TENANT_ID=${GRAFANA_OAUTH_TENANT_ID}
+      - GRAFANA_OAUTH_ADMIN_GROUP_ID=${GRAFANA_OAUTH_ADMIN_GROUP_ID}
+      # SMTP variables
+      - GF_SMTP_ENABLED=${GRAFANA_SMTP_ENABLED}
+      - GF_SMTP_HOST=${GRAFANA_SMTP_HOST}
+      - GF_SMTP_USER=${GRAFANA_SMTP_USER}
+      - GF_SMTP_PASSWORD=${GRAFANA_SMTP_PASSWORD}
+      - GF_SMTP_FROM_ADDRESS=${GRAFANA_SMTP_FROM_ADDRESS}
+    volumes:
+      - ./grafana-data:/var/lib/grafana
+      - ./grafana-config/grafana.ini:/etc/grafana/grafana.ini
+      - ./grafana-config/provisioning:/etc/grafana/provisioning
+    networks:
+      - traefik-net       # So Traefik can see it
+      - observability-net # For internal communication
+    labels:
+      # --- Traefik Labels ---
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-net"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN}`)"
+      - "traefik.http.routers.grafana.entrypoints=https"
+      - "traefik.http.routers.grafana.tls.certresolver=myresolver"
+      - "traefik.http.routers.grafana.service=grafana@docker"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports: # Expose Loki's port for Promtail and Grafana
+      - "127.0.0.1:3100:3100"
+    restart: unless-stopped
+    user: "${UID}:${GID}"
+    command: -config.file=/etc/loki/config.yaml
+    volumes:
+      - ./loki-config:/etc/loki
+      - ./loki-data:/loki
+    networks:
+      - observability-net
+
+  prometheus:
+    image: prom/prometheus:v2.53.5
+    container_name: prometheus
+    restart: unless-stopped
+    user: "${UID}:${GID}"
+    command: --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./prometheus-config:/etc/prometheus
+      - ./prometheus-data:/prometheus
+    networks:
+      - observability-net
+      - traefik-net
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-net"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN}`)"
+      - "traefik.http.routers.prometheus.entrypoints=https"
+      - "traefik.http.routers.prometheus.service=prometheus@docker"
+      - "traefik.http.routers.prometheus.tls.certresolver=myresolver"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+      # Secure the Prometheus UI with the same SSO middleware as the Traefik dashboard
+      - "traefik.http.routers.prometheus.middlewares=sso-auth@docker"
+
+  node-exporter:
+    image: prom/node-exporter:v1.9.1
+    container_name: node-exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - observability-net
+
+  promtail:
+    image: grafana/promtail:3.5
+    container_name: promtail
+    restart: unless-stopped
+    volumes:
+      - ./promtail-config/config.yml:/etc/promtail/config.yml
+      - /var/log/journal:/var/log/journal:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - observability-net
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.52.0
+    container_name: cadvisor
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    command:
+      - --enable_metrics=cpu,memory,network,disk,diskIO
+      - --store_container_labels=true
+    networks:
+      - observability-net
+
+networks:
+  # This network connects to the Traefik container
+  traefik-net:
+    external: true
+  
+  # This network is for internal communication between our observability tools
+  observability-net:
+    driver: bridge

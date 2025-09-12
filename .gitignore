@@ -1,0 +1,18 @@
+# --- Secrets and Environment-Specific Configuration ---
+# Ignore the .env file containing sensitive credentials.
+.env
+
+# --- Application Data ---
+# Ignore all directories ending in '-data'. These contain runtime data like
+# databases, logs, and metrics, which can be very large.
+*-data/
+
+# --- Common System and IDE Files ---
+# Ignore macOS specific files
+.DS_Store
+# Ignore Windows thumbnail cache
+Thumbs.db
+# Ignore Visual Studio Code specific files
+.vscode/
+# Ignore log files
+*.log
