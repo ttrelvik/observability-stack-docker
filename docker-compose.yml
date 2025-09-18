@@ -51,7 +51,7 @@ services:
       - observability-net
 
   prometheus:
-    image: prom/prometheus:v2.53.5
+    image: prom/prometheus:latest
     container_name: prometheus
     restart: unless-stopped
     user: "${UID}:${GID}"
@@ -95,6 +95,7 @@ services:
     volumes:
       - ./promtail-config/config.yml:/etc/promtail/config.yml
       - /var/log/journal:/var/log/journal:ro
+      - traefik-logs:/var/log/traefik:ro
     command: -config.file=/etc/promtail/config.yml
     networks:
       - observability-net
@@ -124,3 +125,7 @@ networks:
   # This network is for internal communication between our observability tools
   observability-net:
     driver: bridge
+
+volumes:
+  traefik-logs:
+    external: true

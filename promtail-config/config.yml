@@ -18,3 +18,23 @@ scrape_configs:
     relabel_configs:
       - source_labels: ['__journal__systemd_unit']
         target_label: 'unit'
+
+  - job_name: traefik
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: traefik-access
+          __path__: /var/log/traefik/access.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            request: request
+            client_host: ClientHost
+            router_name: RouterName
+            service_name: ServiceName
+      - labels:
+          level:
+          router_name:
+          service_name:
