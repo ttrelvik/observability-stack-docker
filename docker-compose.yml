@@ -1,4 +1,4 @@
-# All variables (like DOMAIN, UID, GID, and OAuth/SMTP settings) are set in the .env file
+# All variables (like DOMAIN, and OAuth/SMTP settings) are set in the .env file
 
 services:
   grafana:
