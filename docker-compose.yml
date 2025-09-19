@@ -94,9 +94,12 @@ services:
     container_name: promtail
     restart: unless-stopped
 
+    # Expose Promtail's UDP port to receive syslog messages
+    ports:
+      - "127.0.0.1:1514:1514/udp" # Map host UDP port to container
+
     volumes:
       - ./promtail-config/config.yml:/etc/promtail/config.yml
-      - /var/log/journal:/var/log/journal:ro
       - traefik-logs:/var/log/traefik:ro
     command: -config.file=/etc/promtail/config.yml
     networks:

@@ -24,3 +24,9 @@ schema_config:
       index:
         prefix: index_
         period: 24h
+
+limits_config:
+  # The per-user ingestion rate limit in megabytes per second.
+  ingestion_rate_mb: 15
+  # The per-user burst size in megabytes.
+  ingestion_burst_size_mb: 30
