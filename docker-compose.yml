@@ -1,24 +1,8 @@
-# All variables (like DOMAIN, and OAuth/SMTP settings) are set in the .env file
-
 services:
   grafana:
     image: grafana/grafana-oss:latest
-    container_name: grafana
-    restart: unless-stopped
-    user: "${UID}:${GID}"
-    environment:
-      - DOMAIN=${DOMAIN}
-      # OAuth variables
-      - GRAFANA_OAUTH_CLIENT_SECRET=${GRAFANA_OAUTH_CLIENT_SECRET}
-      - GRAFANA_OAUTH_CLIENT_ID=${GRAFANA_OAUTH_CLIENT_ID}
-      - GRAFANA_OAUTH_TENANT_ID=${GRAFANA_OAUTH_TENANT_ID}
-      - GRAFANA_OAUTH_ADMIN_GROUP_ID=${GRAFANA_OAUTH_ADMIN_GROUP_ID}
-      # SMTP variables
-      - GF_SMTP_ENABLED=${GRAFANA_SMTP_ENABLED}
-      - GF_SMTP_HOST=${GRAFANA_SMTP_HOST}
-      - GF_SMTP_USER=${GRAFANA_SMTP_USER}
-      - GF_SMTP_PASSWORD=${GRAFANA_SMTP_PASSWORD}
-      - GF_SMTP_FROM_ADDRESS=${GRAFANA_SMTP_FROM_ADDRESS}
+    user: "1000:1000"
+    env_file: .env.observability
 
     volumes:
       - grafana-data:/var/lib/grafana
@@ -27,57 +11,59 @@ services:
     networks:
       - traefik-net       # So Traefik can see it
       - observability-net # For internal communication
-    labels:
-      # --- Traefik Labels ---
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-net"
-      - "traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN}`)"
-      - "traefik.http.routers.grafana.entrypoints=https"
-      - "traefik.http.routers.grafana.tls.certresolver=myresolver"
-      - "traefik.http.routers.grafana.service=grafana@docker"
-      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        # --- Traefik Labels ---
+        - "traefik.enable=true"
+        - "traefik.swarm.network=traefik-net"
+        - "traefik.http.routers.grafana.rule=Host(`grafana.trelvik.net`)"
+        - "traefik.http.routers.grafana.entrypoints=https"
+        - "traefik.http.routers.grafana.tls.certresolver=myresolver"
+        - "traefik.http.routers.grafana.service=grafana"
+        - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 
   loki:
     image: grafana/loki:latest
-    container_name: loki
-    ports: # Expose Loki's port for Promtail and Grafana
-      - "127.0.0.1:3100:3100"
-    restart: unless-stopped
     command: -config.file=/etc/loki/config.yaml
-
     volumes:
       - ./loki-config:/etc/loki
       - loki-data:/loki
     networks:
       - observability-net
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: prometheus
-    restart: unless-stopped
     command: --config.file=/etc/prometheus/prometheus.yml
-
     volumes:
       - ./prometheus-config:/etc/prometheus
       - prometheus-data:/prometheus
     networks:
       - observability-net
       - traefik-net
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-net"
-      - "traefik.http.routers.prometheus.rule=Host(`prometheus.${DOMAIN}`)"
-      - "traefik.http.routers.prometheus.entrypoints=https"
-      - "traefik.http.routers.prometheus.service=prometheus@docker"
-      - "traefik.http.routers.prometheus.tls.certresolver=myresolver"
-      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
-      # Secure the Prometheus UI with the same SSO middleware as the Traefik dashboard
-      - "traefik.http.routers.prometheus.middlewares=sso-auth@docker"
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - "traefik.enable=true"
+        - "traefik.swarm.network=traefik-net"
+        - "traefik.http.routers.prometheus.rule=Host(`prometheus.trelvik.net`)"
+        - "traefik.http.routers.prometheus.entrypoints=https"
+        - "traefik.http.routers.prometheus.service=prometheus"
+        - "traefik.http.routers.prometheus.tls.certresolver=myresolver"
+        - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+        # Secure the Prometheus UI with the same SSO middleware as the Traefik dashboard
+        - "traefik.http.routers.prometheus.middlewares=sso-auth@swarm"
 
   node-exporter:
     image: prom/node-exporter:v1.9.1
-    container_name: node-exporter
-    restart: unless-stopped
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -88,27 +74,30 @@ services:
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
     networks:
       - observability-net
+    deploy:
+      mode: global
 
   promtail:
     image: grafana/promtail:3.5
-    container_name: promtail
-    restart: unless-stopped
-
     # Expose Promtail's UDP port to receive syslog messages
     ports:
-      - "127.0.0.1:1514:1514/udp" # Map host UDP port to container
-
+      - target: 1514
+        published: 1514
+        protocol: udp
+        mode: host
     volumes:
       - ./promtail-config/config.yml:/etc/promtail/config.yml
       - traefik-logs:/var/log/traefik:ro
     command: -config.file=/etc/promtail/config.yml
     networks:
       - observability-net
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.52.0
-    container_name: cadvisor
-    restart: unless-stopped
     privileged: true
     volumes:
       - /:/rootfs:ro
@@ -121,19 +110,24 @@ services:
       - --store_container_labels=true
     networks:
       - observability-net
+    deploy:
+      mode: global
 
 networks:
-  # This network connects to the Traefik container
   traefik-net:
     external: true
-  
-  # This network is for internal communication between our observability tools
   observability-net:
-    driver: bridge
+    driver: overlay
 
 volumes:
-  grafana-data: {}
-  loki-data: {}
-  prometheus-data: {}
+  grafana-data:
+    external: true
+    name: observability-stack-docker_grafana-data
+  loki-data:
+    external: true
+    name: observability-stack-docker_loki-data
+  prometheus-data:
+    external: true
+    name: observability-stack-docker_prometheus-data
   traefik-logs:
     external: true

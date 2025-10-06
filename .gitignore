@@ -1,6 +1,6 @@
 # --- Secrets and Environment-Specific Configuration ---
-# Ignore the .env file containing sensitive credentials.
-.env
+# Ignore environment variable files
+.env*
 
 # --- Common System and IDE Files ---
 # Ignore macOS specific files
