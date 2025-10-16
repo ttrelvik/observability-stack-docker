@@ -17,3 +17,10 @@ scrape_configs:
   - job_name: 'cadvisor'
     static_configs:
       - targets: ['cadvisor:8080']
+
+  - job_name: 'mailmon'
+    # The metrics endpoint is not at the root, so specify the path
+    metrics_path: /metrics/
+    static_configs:
+      # Use the docker service name and internal port
+      - targets: ['mailmon_mailmon:8000']
