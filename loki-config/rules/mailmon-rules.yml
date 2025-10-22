@@ -1,0 +1,13 @@
+groups:
+- name: mailmon_log_rules
+  rules:
+  - alert: MailMonErrorLog
+    # This LogQL expression counts the number of lines containing "ERROR"
+    # from the mailmon_mailmon job over the last 5 minutes.
+    expr: count_over_time({job="mailmon_mailmon"} |= "ERROR" [5m]) > 0
+    # This alert will fire immediately once the condition is met.
+    labels:
+      severity: critical
+    annotations:
+      summary: "MailMon service has logged an error"
+      description: "An error was detected in the mailmon_mailmon logs. Please investigate."
