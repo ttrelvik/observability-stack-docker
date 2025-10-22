@@ -4,7 +4,37 @@ groups:
   - alert: MailMonStuckMessages
     expr: last_over_time(mailmon_stuck_tests[12h]) > 0
     labels:
-      severity: warning
+      severity: critical
     annotations:
       summary: "MailMon has stuck tests (instance {{ $labels.instance }})"
       description: "The mailmon_stuck_tests metric is greater than 0, indicating a stuck test.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+  - alert: MailMonHighRTT
+    expr: last_over_time(mailmon_roundtrip_time_last_seconds[12h]) > 300
+    labels:
+      severity: warning
+    annotations:
+      summary: "MailMon has high RTT (instance {{ $labels.instance }})"
+      description: "The mailmon_roundtrip_time_last_seconds metric is greater than 300s.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
+
+- name: prod_website_rules
+  rules:
+  - alert: DrupalInstanceDown
+    expr: count(container_cpu_usage_seconds_total{name=~"drupal_drupal_cms.*"}) < 1
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Drupal instance is down"
+      description: "The container for the production Drupal site has been down for more than 5 minutes."
+
+- name: traefik_rules
+  rules:
+  - alert: TraefikDown
+    expr: count(container_cpu_usage_seconds_total{name=~"traefik_traefik.*"}) < 1
+    for: 5m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Traefik is down"
+      description: "The Traefik container has been down for more than 5 minutes."
