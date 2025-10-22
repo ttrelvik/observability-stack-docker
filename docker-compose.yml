@@ -114,6 +114,38 @@ services:
     deploy:
       mode: global
 
+  alertmanager:
+      image: prom/alertmanager:latest
+      command:
+        - '--config.file=/etc/alertmanager/alertmanager.yml'
+        - '--storage.path=/alertmanager'
+      volumes:
+        - ./alertmanager-config:/etc/alertmanager
+        - alertmanager-data:/alertmanager
+      networks:
+        - observability-net
+        - traefik-net
+      secrets:
+        - alertmanager_smtp_password
+      deploy:
+        placement:
+          constraints:
+            - node.role == manager
+        labels:
+          - "traefik.enable=true"
+          - "traefik.swarm.network=traefik-net"
+          - "traefik.http.routers.alertmanager.rule=Host(`alertmanager.trelvik.net`)"
+          - "traefik.http.routers.alertmanager.entrypoints=https"
+          - "traefik.http.routers.alertmanager.tls.certresolver=myresolver"
+          - "traefik.http.routers.alertmanager.service=alertmanager"
+          - "traefik.http.services.alertmanager.loadbalancer.server.port=9093"
+          # Middleware for SSO authentication:
+          - "traefik.http.routers.alertmanager.middlewares=sso-auth@swarm"
+
+secrets:
+  alertmanager_smtp_password:
+    external: true
+
 networks:
   traefik-net:
     external: true
@@ -132,3 +164,4 @@ volumes:
     name: observability-stack-docker_prometheus-data
   traefik-logs:
     external: true
+  alertmanager-data: {}

@@ -1,0 +1,10 @@
+groups:
+- name: mailmon_rules
+  rules:
+  - alert: MailMonStuckMessages
+    expr: last_over_time(mailmon_stuck_tests[12h]) > 0
+    labels:
+      severity: warning
+    annotations:
+      summary: "MailMon has stuck tests (instance {{ $labels.instance }})"
+      description: "The mailmon_stuck_tests metric is greater than 0, indicating a stuck test.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

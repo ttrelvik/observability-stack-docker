@@ -1,0 +1,30 @@
+global:
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'ttrygve@gmail.com'
+  smtp_auth_username: 'ttrygve@gmail.com'
+  smtp_auth_password_file: /run/secrets/alertmanager_smtp_password
+  smtp_require_tls: true
+
+route:
+  # The top-level route must match all alerts.
+  receiver: 'gmail-receiver'
+
+  # How long to wait before sending a notification about new alerts
+  group_wait: 30s
+
+  # How long to wait before sending a notification about new alerts
+  # that have been added to a group of alerts for which an initial
+  # notification has already been sent.
+  group_interval: 5m
+
+  # How long to wait before re-sending a notification if it has already
+  # been sent successfully for an alert.
+  repeat_interval: 4h
+
+receivers:
+- name: 'gmail-receiver'
+  email_configs:
+  - to: 'ttrygve@gmail.com'
+    send_resolved: true
+    headers:
+      subject: '[Alertmanager] {{ .GroupLabels.alertname }}'
