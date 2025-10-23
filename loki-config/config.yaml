@@ -8,8 +8,8 @@ ruler:
   storage:
     type: local
     local:
-      directory: /loki/ruler 
-  rule_path: /etc/loki/rules
+      directory: /loki/rules
+  rule_path: /etc/loki/rules 
   ring:
     kvstore:
       store: inmemory
