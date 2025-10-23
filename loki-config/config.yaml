@@ -3,20 +3,12 @@ auth_enabled: false
 server:
   http_listen_port: 3100
 
-ruler:
-  alertmanager_url: http://alertmanager:9093
-  ring:
-    kvstore:
-      store: inmemory
-  enable_api: true
-
 common:
   instance_addr: 127.0.0.1
   path_prefix: /loki
   storage:
     filesystem:
       chunks_directory: /loki/chunks
-      rules_directory: /etc/loki/rules
   replication_factor: 1
   ring:
     kvstore:
