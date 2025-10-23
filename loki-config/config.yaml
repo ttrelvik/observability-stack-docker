@@ -5,11 +5,6 @@ server:
 
 ruler:
   alertmanager_url: http://alertmanager:9093
-  storage:
-    type: local
-    local:
-      directory: /loki/rules
-  rule_path: /etc/loki/rules 
   ring:
     kvstore:
       store: inmemory
@@ -21,7 +16,7 @@ common:
   storage:
     filesystem:
       chunks_directory: /loki/chunks
-      rules_directory: /loki/rules
+      rules_directory: /etc/loki/rules
   replication_factor: 1
   ring:
     kvstore:
@@ -38,7 +33,5 @@ schema_config:
         period: 24h
 
 limits_config:
-  # The per-user ingestion rate limit in megabytes per second.
   ingestion_rate_mb: 15
-  # The per-user burst size in megabytes.
   ingestion_burst_size_mb: 30
