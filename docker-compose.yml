@@ -107,8 +107,9 @@ services:
       - /dev/disk/:/dev/disk:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
     command:
-      - --enable_metrics=cpu,memory,network,disk,diskIO
+      - --enable_metrics=cpu,memory,network,disk
       - --store_container_labels=true
+      - '--housekeeping_interval=10s'
     networks:
       - observability-net
     deploy:
