@@ -3,16 +3,16 @@ auth_enabled: false
 server:
   http_listen_port: 3100
 
-# ruler:
-#   alertmanager_url: http://alertmanager:9093
-#   storage:
-#     type: local
-#     local:
-#       directory: /etc/loki/rules
-#   rule_path: /tmp/loki/rules
-#   ring:
-#     kvstore:
-#       store: inmemory
+ruler:
+  alertmanager_url: http://alertmanager:9093
+  storage:
+    type: local
+    local:
+      directory: /loki/rules
+  rule_path: /tmp/loki-rules
+  ring:
+    kvstore:
+      store: inmemory
 
 common:
   instance_addr: 127.0.0.1
