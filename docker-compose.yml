@@ -152,6 +152,7 @@ networks:
     external: true
   observability-net:
     driver: overlay
+    attachable: true
 
 volumes:
   grafana-data:
