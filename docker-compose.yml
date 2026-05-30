@@ -1,6 +1,6 @@
 services:
   grafana:
-    image: grafana/grafana-oss:latest
+    image: grafana/grafana-oss:13.0.1
     user: "1000:1000"
     env_file: .env.observability
 
@@ -26,7 +26,7 @@ services:
         - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 
   loki:
-    image: grafana/loki:latest
+    image: grafana/loki:3.7.2
     command: -config.file=/etc/loki/config.yaml
     volumes:
       - ./loki-config:/etc/loki
@@ -39,7 +39,7 @@ services:
           - node.role == manager
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v3.11.3
     command: --config.file=/etc/prometheus/prometheus.yml
     volumes:
       - ./prometheus-config:/etc/prometheus
@@ -106,17 +106,19 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
+      - /run/containerd/containerd.sock:/run/containerd/containerd.sock:ro
     command:
       - --enable_metrics=cpu,memory,network,disk
       - --store_container_labels=true
       - '--housekeeping_interval=10s'
+      - --docker_only=true
     networks:
       - observability-net
     deploy:
       mode: global
 
   alertmanager:
-      image: prom/alertmanager:latest
+      image: prom/alertmanager:v0.32.1
       command:
         - '--config.file=/etc/alertmanager/alertmanager.yml'
         - '--storage.path=/alertmanager'
