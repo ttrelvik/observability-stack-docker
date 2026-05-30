@@ -63,7 +63,7 @@ services:
         - "traefik.http.routers.prometheus.middlewares=sso-auth@swarm"
 
   node-exporter:
-    image: prom/node-exporter:v1.9.1
+    image: prom/node-exporter:v1.11.1
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
@@ -98,7 +98,7 @@ services:
           - node.role == manager
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.52.0
+    image: ghcr.io/google/cadvisor:v0.57.0
     privileged: true
     volumes:
       - /:/rootfs:ro
