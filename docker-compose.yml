@@ -77,19 +77,22 @@ services:
     deploy:
       mode: global
 
-  promtail:
-    image: grafana/promtail:3.5
-    # Expose Promtail's UDP port to receive syslog messages
+  alloy:
+    image: grafana/alloy:v1.16.1
+    user: root
+    # Expose Alloy's UDP port to receive syslog messages
     ports:
       - target: 1514
         published: 1514
         protocol: udp
         mode: host
     volumes:
-      - ./promtail-config/config.yml:/etc/promtail/config.yml
-      - traefik-logs:/var/log/traefik:ro
+      - ./alloy-config/config.alloy:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    command: -config.file=/etc/promtail/config.yml
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - traefik-logs:/var/log-traefik:ro
+    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     networks:
       - observability-net
     deploy:
