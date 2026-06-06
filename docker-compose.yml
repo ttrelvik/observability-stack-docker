@@ -78,7 +78,7 @@ services:
       mode: global
 
   alloy:
-    image: grafana/alloy:v1.16.1
+    image: grafana/alloy:v1.16.2
     user: root
     # Expose Alloy's UDP port to receive syslog messages
     ports:
