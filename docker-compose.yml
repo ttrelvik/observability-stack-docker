@@ -101,7 +101,7 @@ services:
           - node.role == manager
 
   cadvisor:
-    image: ghcr.io/google/cadvisor:v0.57.0
+    image: ghcr.io/google/cadvisor:v0.60.1
     privileged: true
     volumes:
       - /:/rootfs:ro
