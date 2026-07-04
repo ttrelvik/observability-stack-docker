@@ -121,7 +121,7 @@ services:
       mode: global
 
   alertmanager:
-      image: prom/alertmanager:v0.33.0
+      image: prom/alertmanager:v0.33.1
       command:
         - '--config.file=/etc/alertmanager/alertmanager.yml'
         - '--storage.path=/alertmanager'
