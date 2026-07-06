@@ -11,3 +11,7 @@ Thumbs.db
 .vscode/
 # Ignore log files
 *.log
+
+# Ignore tarball backup files
+*.tgz
+*.tar.gz
