@@ -63,7 +63,7 @@ services:
         - "traefik.http.routers.prometheus.middlewares=sso-auth@swarm"
 
   node-exporter:
-    image: prom/node-exporter:v1.12.0
+    image: prom/node-exporter:v1.12.1
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
