@@ -110,7 +110,7 @@ services:
           memory: 32M
 
   alloy:
-    image: grafana/alloy:v1.17.1
+    image: grafana/alloy:v1.18.0
     user: root
     # Expose Alloy's UDP port to receive syslog messages
     ports:
