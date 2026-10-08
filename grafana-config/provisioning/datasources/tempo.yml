@@ -1,0 +1,41 @@
+apiVersion: 1
+
+datasources:
+  - name: Tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    uid: tempo
+    jsonData:
+      nodeGraph:
+        enabled: true
+      search:
+        hide: false
+      tracesToLogsV2:
+        datasourceUid: 'P8E80F9AEF21F6940'
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
+        tags:
+          - key: 'service.name'
+            value: 'service_name'
+          - key: 'job'
+        filterByTraceID: true
+        filterBySpanID: true
+        customQuery: false
+      tracesToMetrics:
+        datasourceUid: 'PBFA97CFB590B2093'
+        spanStartTimeShift: '-1h'
+        spanEndTimeShift: '1h'
+        tags:
+          - key: 'service.name'
+            value: 'service'
+          - key: 'job'
+        queries:
+          - name: 'Throughput'
+            query: 'sum(rate(traces_spanmetrics_calls_total{$__tags}[5m]))'
+          - name: 'Latency'
+            query: 'histogram_quantile(0.95, sum(rate(traces_spanmetrics_latency_bucket{$__tags}[5m])) by (le))'
+      serviceMap:
+        datasourceUid: 'PBFA97CFB590B2093'
+      lokiSearch:
+        datasourceUid: 'P8E80F9AEF21F6940'

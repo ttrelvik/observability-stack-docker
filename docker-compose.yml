@@ -54,6 +54,25 @@ services:
         reservations:
           memory: 256M
 
+  tempo:
+    image: grafana/tempo:3.1.0
+    command: -config.file=/etc/tempo/config.yaml
+    volumes:
+      - ./tempo-config:/etc/tempo
+      - tempo-data:/var/tempo
+    networks:
+      - observability-net
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 256M
+
+
   prometheus:
     image: prom/prometheus:v3.15.0
     command: --config.file=/etc/prometheus/prometheus.yml
@@ -112,11 +131,19 @@ services:
   alloy:
     image: grafana/alloy:v1.20.1
     user: root
-    # Expose Alloy's UDP port to receive syslog messages
+    # Expose Alloy's UDP port to receive syslog messages and TCP ports for OpenTelemetry ingestion
     ports:
       - target: 1514
         published: 1514
         protocol: udp
+        mode: host
+      - target: 4317
+        published: 4317
+        protocol: tcp
+        mode: host
+      - target: 4318
+        published: 4318
+        protocol: tcp
         mode: host
     volumes:
       - ./alloy-config/config.alloy:/etc/alloy/config.alloy:ro
@@ -228,3 +255,4 @@ volumes:
     external: true
     name: observability-stack-docker_prometheus-data
   alertmanager-data: {}
+  tempo-data: {}
