@@ -195,7 +195,7 @@ services:
           memory: 768M
 
   alertmanager:
-      image: prom/alertmanager:v0.34.2
+      image: prom/alertmanager:v0.35.0
       command:
         - '--config.file=/etc/alertmanager/alertmanager.yml'
         - '--storage.path=/alertmanager'
