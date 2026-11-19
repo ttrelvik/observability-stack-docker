@@ -170,7 +170,7 @@ services:
           memory: 512M
 
   cadvisor:
-    image: ghcr.io/google/cadvisor:v0.61.0
+    image: ghcr.io/google/cadvisor:v0.61.1
     privileged: true
     volumes:
       - /:/rootfs:ro
